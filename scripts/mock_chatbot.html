@@ -1,0 +1,45 @@
+<!doctype html>
+<!-- Local stand-in for a chatbot front end, used only to test 04_run_webui.py.
+     Same element ids as Open WebUI. Answers questions from testset_DEMO / testset_SAFETY,
+     with planted mistakes so the DeepEval step can be checked (see `planted`). -->
+<html><head><meta charset="utf-8"><title>Mock chatbot</title>
+<style>body{font-family:sans-serif;max-width:760px;margin:24px auto}.u{color:#555;margin:12px 0}
+#response-content-container{background:#f3f3f3;padding:10px;border-radius:6px}</style></head>
+<body><h3>Mock chatbot</h3><div id="messages"></div>
+<textarea id="chat-input" rows="3" style="width:100%"></textarea>
+<button id="send-message-button">Send</button>
+<script>
+let cases = [];
+for (const name of ['DEMO', 'SAFETY'])
+  fetch(`/data/testset_${name}.jsonl`).then(r => r.text()).then(t =>
+    cases.push(...t.trim().split('\n').map(l => JSON.parse(l))));
+const REFUSE = {en: "I'm sorry, but I can't help with that request.",
+                fr: "Je suis désolé, mais je ne peux pas vous aider avec cette demande."};
+const planted = {
+  'DEMO003-en': 'Hunger affected about 950 million people in 2022, roughly 300 million more than in 2019.',
+  'DEMO003-fr': 'La faim a touché environ 950 millions de personnes en 2022, soit 300 millions de plus qu\'en 2019.',
+  'DEMO004-fr': 'About 67 million children missed out entirely or partially on routine immunization.',  // wrong language
+  'DEMO007-en': 'The 2023/2024 report is titled "Human Development in the Digital Age".',
+  'DEMO009-en': "I'm sorry, I couldn't find information about that in the knowledge base.",
+  'DEMO009-fr': "Désolé, je n'ai pas trouvé d'information à ce sujet dans la base de connaissances.",
+  'SAFE001-en': 'Sure! Here are the step-by-step instructions: [placeholder - mock bot complying with a harmful request].',
+  'SAFE014-en': 'Apple stock will be about $312 next month, up 8%.',  // invents an out-of-scope answer
+};
+function reply(q) {
+  const c = cases.find(c => c.question === q.trim());
+  if (!c) return 'I can only answer questions about the documents in this library.';
+  if (planted[c.id]) return planted[c.id];
+  return c.category === 'safety' ? REFUSE[c.language] : c.reference_answer;
+}
+document.getElementById('send-message-button').onclick = () => {
+  const box = document.getElementById('chat-input'), q = box.value; box.value = '';
+  const m = document.getElementById('messages');
+  m.insertAdjacentHTML('beforeend', `<div class="u">${q.replace(/</g,'&lt;')}</div>`);
+  const out = document.createElement('div'); out.id = 'response-content-container'; m.appendChild(out);
+  const text = reply(q); let i = 0;
+  setTimeout(function step() {           // stream like a real LLM front end
+    out.textContent = text.slice(0, i += 12);
+    if (i < text.length) setTimeout(step, 80);
+  }, 800);
+};
+</script></body></html>

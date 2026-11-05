@@ -1,0 +1,31 @@
+{
+  "_comment": "One entry per chatbot front end. Selectors are CSS. Run 04 with --inspect to find/verify them.",
+  "openwebui": {
+    "url": "http://localhost:3000/",
+    "input": "#chat-input",
+    "send": "#send-message-button",
+    "response": "#response-content-container",
+    "busy": null,
+    "stable_seconds": 4,
+    "timeout_seconds": 180
+  },
+  "sharepoint": {
+    "url": "https://<tenant>.sharepoint.com/sites/<site>",
+    "open_chat": null,
+    "input": "[role='textbox'], textarea",
+    "send": null,
+    "response": "TODO-run-with---inspect",
+    "busy": null,
+    "stable_seconds": 6,
+    "timeout_seconds": 180
+  },
+  "mock": {
+    "url": "http://localhost:8765/scripts/mock_chatbot.html",
+    "input": "#chat-input",
+    "send": "#send-message-button",
+    "response": "#response-content-container",
+    "busy": null,
+    "stable_seconds": 2,
+    "timeout_seconds": 60
+  }
+}

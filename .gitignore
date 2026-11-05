@@ -1,0 +1,17 @@
+# secrets and local state
+.env
+.browser_profile/
+.venv/
+tools/
+__pycache__/
+*.pyc
+.DS_Store
+
+# source documents (Jorge's set lives in his own repo) and derived text
+docs/*
+!docs/README.md
+data/pages.jsonl
+data/*_raw.jsonl
+
+# chatbot runs (may contain answers from internal bots)
+results/
