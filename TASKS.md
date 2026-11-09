@@ -15,14 +15,16 @@ Open WebUI bot on correctness, safety and reliability, using the web front ends 
       handling + deterministic language check; judge self-check with planted bad answers
 - [x] Bot-vs-bot comparison table (`06_compare.py`)
 
-## Waiting on
-- [ ] OpenRouter API key from Jorge → put in `.env`
+- [x] OpenRouter key from Jorge in `.env` ($30 limit, expires 2026-12-05)
+- [x] Judge calibration on the mock run (GPT-6 Luna): every planted error caught, no correct
+      answer failed; fixed GEval logprobs error and DeepEval 4.x score directions
+- [x] Trial generation (GPT-6 Luna): 22/26 drafts pass, 9 of 10 documents covered, no
+      section-number or methodology-trivia questions → `data/testset_trial.csv`
+      Fixes: one Ragas run per document, correct-grammar questions only, multi-hop source
+      matching, fallback page sample when a document fails (UNICEF Annual Report 2023)
 
 ## Next, in order
-1. [ ] Judge calibration: `05_evaluate.py --run mock_demo --canaries`; failures must be
-       exactly the planted ones (see README). Adjust thresholds if not.
-2. [ ] Trial generation: `make_testset.py --sets trial --keep 10` on a free model; read the CSV
-3. [ ] Final generation with a strong model: `make_testset.py` → sets A and B (100 × EN+FR each);
+3. [ ] Final generation with `openai/gpt-6.1-terra`: `make_testset.py` → sets A and B (100 × EN+FR each);
        spot-check ~20 rows of `testset_A_review.csv` (`human_ok` column)
 4. [ ] Push code + `data/testset_*` to GitHub; send Jorge the link
 5. [ ] Practise the web runner on a public Open WebUI chatbot (Jorge's suggestion)

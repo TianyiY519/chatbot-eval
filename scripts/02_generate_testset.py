@@ -7,10 +7,13 @@ Usage (normally called by make_testset.py):
 
 --half first/second draw from *disjoint* pages of the same documents, so two
 sets test different content from the same knowledge base.
+Ragas runs once per document (size split evenly) so every document is covered;
+left to itself it concentrates questions on a few documents.
 Output: data/testset_<SET>_raw.jsonl (every case keeps source file + page).
 """
 import argparse
 import json
+import math
 import random
 import re
 from collections import defaultdict
@@ -25,6 +28,7 @@ from ragas.testset.synthesizers import (
     MultiHopSpecificQuerySynthesizer,
     SingleHopSpecificQuerySynthesizer,
 )
+from ragas.testset.synthesizers.base import QueryStyle
 
 from llm import ROOT, langchain_chat, langchain_embeddings
 
@@ -44,8 +48,58 @@ LLM_CONTEXT = (
     "(reports, papers, presentations). "
     "Each question must be self-contained: name the report, organisation or year when needed, never say "
     "'the document', 'the context', 'this page' or 'the text'. "
+    "Ask about substantive findings, figures, trends, conclusions and recommendations, not methodology "
+    "footnotes, photo captions or chapter/box/figure numbers. "
     "Each reference answer must be concise (1-3 sentences) and use only facts stated in the context."
 )
+
+
+STYLES = {"perfect": QueryStyle.PERFECT_GRAMMAR, "web": QueryStyle.WEB_SEARCH_LIKE,
+          "poor": QueryStyle.POOR_GRAMMAR, "misspelled": QueryStyle.MISSPELLED}
+
+
+class StyleLimit:
+    """Ragas mixes in misspelled / poor-grammar questions; keep only the styles we ask for."""
+
+    styles: list = [QueryStyle.PERFECT_GRAMMAR]
+
+    def prepare_combinations(self, *args, **kwargs):
+        combos = super().prepare_combinations(*args, **kwargs)
+        for c in combos:
+            c["styles"] = list(self.styles)
+        return combos
+
+
+class SingleHop(StyleLimit, SingleHopSpecificQuerySynthesizer):
+    pass
+
+
+class MultiHop(StyleLimit, MultiHopSpecificQuerySynthesizer):
+    pass
+
+
+def strip_hop(ctx: str) -> str:
+    """Multi-hop contexts come back as '<1-hop>\n\n<page text>'."""
+    return re.sub(r"^<\d+-hop>\s*", "", ctx)
+
+
+def generate_for_doc(source: str, pages: list[dict], size: int, multi_hop: float, llm, emb) -> list:
+    chunks = [Document(page_content=p["text"], metadata={"source": p["source"], "page": p["page"]}) for p in pages]
+    gen = TestsetGenerator(llm=llm, embedding_model=emb, persona_list=PERSONAS, llm_context=LLM_CONTEXT)
+    dist = [(SingleHop(llm=llm, llm_context=LLM_CONTEXT), 1 - multi_hop)]
+    if multi_hop > 0:
+        dist.append((MultiHop(llm=llm, llm_context=LLM_CONTEXT), multi_hop))
+    run = RunConfig(max_workers=8, timeout=180)
+    try:
+        return gen.generate_with_chunks(chunks, testset_size=size, query_distribution=dist,
+                                        run_config=run, raise_exceptions=False).samples
+    except ValueError as e:
+        # multi-hop needs overlapping entities between pages; fall back to single-hop only
+        if multi_hop == 0:
+            raise
+        print(f"  {source}: multi-hop unavailable ({e}); single-hop only")
+        return gen.generate(testset_size=size, query_distribution=[(dist[0][0], 1.0)],
+                            run_config=run, raise_exceptions=False).samples
 
 
 def is_body_page(rec: dict, n_pages: int) -> bool:
@@ -66,7 +120,7 @@ def is_body_page(rec: dict, n_pages: int) -> bool:
     return True
 
 
-def sample_pages(half: str, pages_per_doc: int, seed: int, max_chunks: int = 10**9) -> list[dict]:
+def sample_pages(half: str, pages_per_doc: int, seed: int, max_chunks: int = 10**9, offset: int = 0) -> list[dict]:
     by_doc = defaultdict(list)
     for line in PAGES.open(encoding="utf-8"):
         rec = json.loads(line)
@@ -78,7 +132,7 @@ def sample_pages(half: str, pages_per_doc: int, seed: int, max_chunks: int = 10*
         random.Random(seed).shuffle(body)
         # fixed split: even positions -> first half, odd -> second (never overlap)
         pool = {"first": body[0::2], "second": body[1::2]}.get(half, body)
-        chosen = pool[:pages_per_doc]
+        chosen = pool[offset:offset + pages_per_doc]
         picked += chosen
         print(f"{source}: {len(body)} body pages, using {len(chosen)}")
     if len(picked) > max_chunks:  # big libraries: spread the budget over a random subset of pages
@@ -96,53 +150,57 @@ def main() -> None:
     ap.add_argument("--pages-per-doc", type=int, default=8)
     ap.add_argument("--max-chunks", type=int, default=120, help="cap on pages sent to Ragas (cost control)")
     ap.add_argument("--multi-hop", type=float, default=0.2, help="share of multi-hop questions")
+    ap.add_argument("--styles", default="perfect", help=f"question styles, comma list of {','.join(STYLES)}")
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
+    StyleLimit.styles = [STYLES[x.strip()] for x in args.styles.split(",")]
 
     pages = sample_pages(args.half, args.pages_per_doc, args.seed, args.max_chunks)
-    chunks = [Document(page_content=p["text"], metadata={"source": p["source"], "page": p["page"]})
-              for p in pages]
+    by_doc = defaultdict(list)
+    for p in pages:
+        by_doc[p["source"]].append(p)
+    per_doc = math.ceil(args.size / len(by_doc))
 
     llm = LangchainLLMWrapper(langchain_chat("gen", temperature=0.3))
     emb = LangchainEmbeddingsWrapper(langchain_embeddings())
-    gen = TestsetGenerator(llm=llm, embedding_model=emb, persona_list=PERSONAS, llm_context=LLM_CONTEXT)
-
-    dist = [(SingleHopSpecificQuerySynthesizer(llm=llm, llm_context=LLM_CONTEXT), 1 - args.multi_hop)]
-    if args.multi_hop > 0:
-        dist.append((MultiHopSpecificQuerySynthesizer(llm=llm, llm_context=LLM_CONTEXT), args.multi_hop))
-
-    try:
-        testset = gen.generate_with_chunks(chunks, testset_size=args.size, query_distribution=dist,
-                                           run_config=RunConfig(max_workers=8, timeout=180),
-                                           raise_exceptions=False)
-    except ValueError as e:
-        # multi-hop needs overlapping entities between pages; fall back to single-hop only
-        if args.multi_hop == 0:
-            raise
-        print(f"Multi-hop unavailable ({e}); retrying single-hop only")
-        dist = [(dist[0][0], 1.0)]
-        testset = gen.generate(testset_size=args.size, query_distribution=dist,
-                               run_config=RunConfig(max_workers=8, timeout=180), raise_exceptions=False)
-
-    # map every reference context back to its page so sources can be checked
     page_of = {p["text"]: f'{p["source"]}#{p.get("loc", "page " + str(p["page"]))}' for p in pages}
+
     out = ROOT / "data" / f"testset_{args.set}_raw.jsonl"
     n = 0
     with out.open("w", encoding="utf-8") as f:
-        for s in testset.samples:
-            es = s.eval_sample
-            if not es.user_input or not es.reference:
+        for i, (source, doc_pages) in enumerate(sorted(by_doc.items()), 1):
+            print(f"[{i}/{len(by_doc)}] {source}: {per_doc} questions from {len(doc_pages)} pages")
+            samples = None
+            # retries: single-hop only, then a different page sample (a provider sometimes drops one request)
+            alt_pages = [p for p in sample_pages(args.half, args.pages_per_doc, args.seed, offset=args.pages_per_doc)
+                         if p["source"] == source]  # next unused pages of the same half, so sets stay disjoint
+            for multi_hop, use_pages in ((args.multi_hop, doc_pages), (0.0, doc_pages), (0.0, alt_pages)):
+                try:
+                    samples = generate_for_doc(source, use_pages, per_doc, multi_hop, llm, emb)
+                    page_of.update({p["text"]: f'{p["source"]}#{p.get("loc", "page " + str(p["page"]))}'
+                                    for p in use_pages})
+                    break
+                except Exception as e:  # one difficult document shouldn't stop the run
+                    print(f"  {source}: attempt failed ({type(e).__name__}: {e})")
+            if samples is None:
+                print(f"  {source}: skipped")
                 continue
-            ctxs = es.reference_contexts or []
-            n += 1
-            f.write(json.dumps({
-                "id": f"{args.set}{n:03d}",
-                "question": es.user_input.strip(),
-                "reference_answer": es.reference.strip(),
-                "reference_contexts": ctxs,
-                "sources": sorted({page_of.get(c, "UNMATCHED") for c in ctxs}),
-                "synthesizer": s.synthesizer_name,
-            }, ensure_ascii=False) + "\n")
+            for s in samples:
+                es = s.eval_sample
+                if not es.user_input or not es.reference:
+                    continue
+                # map every reference context back to its page so sources can be checked
+                ctxs = [strip_hop(c) for c in es.reference_contexts or []]
+                n += 1
+                f.write(json.dumps({
+                    "id": f"{args.set}{n:03d}",
+                    "question": es.user_input.strip(),
+                    "reference_answer": es.reference.strip(),
+                    "reference_contexts": ctxs,
+                    "sources": sorted({page_of.get(c, "UNMATCHED") for c in ctxs}),
+                    "synthesizer": s.synthesizer_name,
+                }, ensure_ascii=False) + "\n")
+            f.flush()
     print(f"\n{n} raw cases -> {out}")
 
 

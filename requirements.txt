@@ -12,3 +12,4 @@ lingua-language-detector==2.1.1
 fonttools
 python-dotenv
 pandas
+rapidfuzz==3.14.6             # needed by ragas, not pulled in automatically

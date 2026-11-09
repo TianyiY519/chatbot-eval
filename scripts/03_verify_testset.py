@@ -30,7 +30,8 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from llm import ROOT, langchain_chat
 
-BANNED = re.compile(r"\b(the|this|given|provided) (document|context|text|page|passage|excerpt)\b", re.I)
+BANNED = re.compile(r"\b(the|this|given|provided) (document|context|text|page|passage|excerpt)\b"
+                    r"|\b(chapter|box|figure|table|annex|section) \d", re.I)  # users don't know section numbers
 NUM = re.compile(r"\d[\d,]*\.?\d*")
 
 JUDGE_SYSTEM = """You audit test cases for a document-grounded chatbot.
@@ -102,7 +103,7 @@ def main() -> None:
         if missing:
             problems.append(f"numbers not in source: {', '.join(missing[:4])}")
         if BANNED.search(c["question"]):
-            problems.append("refers to 'the document/context'")
+            problems.append("refers to 'the document/context' or a section number")
         if any(SequenceMatcher(None, c["question"].lower(), q.lower()).ratio() > 0.85 for q in kept_questions):
             problems.append("near-duplicate question")
 
