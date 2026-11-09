@@ -99,8 +99,18 @@ def deepeval_judge():
     if PROVIDER == "openrouter":
         from deepeval.models import OpenRouterModel
 
+        class NoLogprobsOpenRouter(OpenRouterModel):
+            """GEval asks for token logprobs, which reasoning models (e.g. GPT-6) reject. Raising
+            AttributeError here makes DeepEval fall back to its plain JSON scoring path."""
+
+            def generate_raw_response(self, *args, **kwargs):
+                raise AttributeError("logprobs disabled")
+
+            async def a_generate_raw_response(self, *args, **kwargs):
+                raise AttributeError("logprobs disabled")
+
         _require("OPENROUTER_API_KEY")
-        return OpenRouterModel(model=_model_name("judge"), api_key=os.environ["OPENROUTER_API_KEY"],
+        return NoLogprobsOpenRouter(model=_model_name("judge"), api_key=os.environ["OPENROUTER_API_KEY"],
                                base_url=OPENROUTER_URL, temperature=0)
     if PROVIDER == "ollama":
         from deepeval.models import OllamaModel
