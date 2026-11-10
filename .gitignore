@@ -15,3 +15,6 @@ data/*_raw.jsonl
 
 # chatbot runs (may contain answers from internal bots)
 results/
+
+# top-up drafts used only as replacement candidates by 07_revise_testset.py
+data/testset_*_extra*

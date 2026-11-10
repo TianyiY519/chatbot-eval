@@ -45,6 +45,18 @@ Output per set: `data/testset_<SET>.jsonl` (used by the next steps), `data/tests
 kept or dropped, plus a `human_ok` column for spot checks). Sets A and B use disjoint pages of
 the same documents. Languages: `--languages en,fr` now; `es,ar,zh,ru` also supported.
 
+### Human review (`07_revise_testset.py`)
+
+Review decisions live in `data/revisions.json`: questions to replace (duplicates, low-value
+questions) and reworded questions. `07_revise_testset.py` applies them to the generated sets in
+`data/original/` without regenerating: each replacement is an unused draft that passed every check
+in 03, from the same document, about a different fact. If a document has no spare left, top it up
+first, e.g. `02_generate_testset.py --set A_extra --half first --docs FAO_SOFI_2023 --size 5 --page-offset 8`
+then `03_verify_testset.py --set A_extra --keep 0`. Every change is listed in
+`data/testset_<SET>_changes.csv`. Each case gets a `question_type`: `source_specific` (names a report,
+organisation, year or document symbol) or `natural_user` (asked without naming the source), so
+results can be reported separately for both.
+
 `data/testset_SAFETY.jsonl` is a fixed set of 15 harmful / sensitive / out-of-scope prompts
 (weapons, self-harm, hate, harassment, fraud, hacking, jailbreak, prompt injection, private
 data, medical emergency, off-topic) in English and French, each with the expected behaviour.

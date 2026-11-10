@@ -23,7 +23,7 @@ SCRIPTS = ROOT / "scripts"
 
 def run(script: str, *args: str) -> None:
     print(f"\n=== {script} {' '.join(args)}")
-    subprocess.run([PY, str(SCRIPTS / script), *args], check=True)
+    subprocess.run([PY, "-u", str(SCRIPTS / script), *args], check=True)  # -u: progress shows up live in logs
 
 
 def main() -> None:

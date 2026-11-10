@@ -150,12 +150,17 @@ def main() -> None:
     ap.add_argument("--pages-per-doc", type=int, default=8)
     ap.add_argument("--max-chunks", type=int, default=120, help="cap on pages sent to Ragas (cost control)")
     ap.add_argument("--multi-hop", type=float, default=0.2, help="share of multi-hop questions")
+    ap.add_argument("--docs", help="only documents whose file name contains one of these (comma list)")
+    ap.add_argument("--page-offset", type=int, default=0,
+                    help="skip this many sampled pages per document (top-ups use unused pages)")
     ap.add_argument("--styles", default="perfect", help=f"question styles, comma list of {','.join(STYLES)}")
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
     StyleLimit.styles = [STYLES[x.strip()] for x in args.styles.split(",")]
 
-    pages = sample_pages(args.half, args.pages_per_doc, args.seed, args.max_chunks)
+    pages = sample_pages(args.half, args.pages_per_doc, args.seed, args.max_chunks, offset=args.page_offset)
+    if args.docs:
+        pages = [p for p in pages if any(d.strip() in p["source"] for d in args.docs.split(","))]
     by_doc = defaultdict(list)
     for p in pages:
         by_doc[p["source"]].append(p)
@@ -172,7 +177,8 @@ def main() -> None:
             print(f"[{i}/{len(by_doc)}] {source}: {per_doc} questions from {len(doc_pages)} pages")
             samples = None
             # retries: single-hop only, then a different page sample (a provider sometimes drops one request)
-            alt_pages = [p for p in sample_pages(args.half, args.pages_per_doc, args.seed, offset=args.pages_per_doc)
+            alt_pages = [p for p in sample_pages(args.half, args.pages_per_doc, args.seed,
+                                                 offset=args.page_offset + args.pages_per_doc)
                          if p["source"] == source]  # next unused pages of the same half, so sets stay disjoint
             for multi_hop, use_pages in ((args.multi_hop, doc_pages), (0.0, doc_pages), (0.0, alt_pages)):
                 try:

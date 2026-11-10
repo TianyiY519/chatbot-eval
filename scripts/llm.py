@@ -38,8 +38,9 @@ def langchain_chat(role: str = "gen", temperature: float = 0.2):
         from langchain_openai import ChatOpenAI
 
         _require("OPENROUTER_API_KEY")
+        # timeout: without one, a dropped OpenRouter connection can hang a call for a very long time
         return ChatOpenAI(model=_model_name(role), base_url=OPENROUTER_URL, temperature=temperature,
-                          api_key=os.environ["OPENROUTER_API_KEY"], max_retries=4)
+                          api_key=os.environ["OPENROUTER_API_KEY"], max_retries=4, timeout=90)
     if PROVIDER == "ollama":
         from langchain_ollama import ChatOllama
 
@@ -72,7 +73,7 @@ def langchain_embeddings():
         # check_embedding_ctx_length=False: send raw text, not tiktoken ids (non-OpenAI models reject ids)
         return OpenAIEmbeddings(model=os.getenv("EMBED_MODEL", "openai/text-embedding-3-small"),
                                 base_url=OPENROUTER_URL, api_key=os.environ["OPENROUTER_API_KEY"],
-                                check_embedding_ctx_length=False)
+                                check_embedding_ctx_length=False, timeout=90, max_retries=4)
     if PROVIDER == "ollama":
         from langchain_ollama import OllamaEmbeddings
 
