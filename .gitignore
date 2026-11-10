@@ -18,3 +18,7 @@ results/
 
 # top-up drafts used only as replacement candidates by 07_revise_testset.py
 data/testset_*_extra*
+
+# earlier versions, kept locally only (07_revise_testset.py replays the review from data/original/)
+data/original/
+data/testset_trial*

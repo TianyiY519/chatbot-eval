@@ -19,7 +19,7 @@ Open WebUI bot on correctness, safety and reliability, using the web front ends 
 - [x] Judge calibration on the mock run (GPT-6 Luna): every planted error caught, no correct
       answer failed; fixed GEval logprobs error and DeepEval 4.x score directions
 - [x] Trial generation (GPT-6 Luna): 22/26 drafts pass, 9 of 10 documents covered, no
-      section-number or methodology-trivia questions → `data/testset_trial.csv`
+      section-number or methodology-trivia questions (trial set kept locally)
       Fixes: one Ragas run per document, correct-grammar questions only, multi-hop source
       matching, fallback page sample when a document fails (UNICEF Annual Report 2023)
 
