@@ -18,10 +18,3 @@ results/
 
 # top-up drafts used only as replacement candidates by 07_revise_testset.py
 data/testset_*_extra*
-
-# review working files (kept locally; the final sets are data/testset_A.* and data/testset_B.*)
-data/original/
-data/revisions.json
-data/testset_*_changes.csv
-data/testset_A_review.csv
-data/testset_B_review.csv

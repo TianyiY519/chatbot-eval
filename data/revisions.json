@@ -1,0 +1,82 @@
+{
+  "_comment": "Human review of the GPT-6.1 Terra test sets (2026-11-09). Applied by scripts/07_revise_testset.py.",
+  "replace": {
+    "A015": "duplicate of A005 (UNICEF five Goal Areas)",
+    "A009": "duplicate of A019 (Mexico road safety law); A019 is more complete",
+    "A035": "duplicate of A025 (UNICEF cash transfers, 110,000 households)",
+    "A061": "duplicate of A051 (Dar es Salaam informal vendors, 70% of vegetables)",
+    "A081": "duplicate of A071 (Tanzania programme outcomes)",
+    "A093": "duplicate of A083 (Dasgupta Review recommendations)",
+    "A095": "combines two unrelated facts (procurement + immunization campaigns)",
+    "B036": "duplicate of B026 (vaccine confidence) and too vague",
+    "B041": "duplicate of B031 (child overweight target)",
+    "B062": "duplicate of B052 (foreign direct investment and nutrition)",
+    "B074": "duplicate of B064 (HDI misses agency)",
+    "B059": "low value: asks for a year range from a reference-list entry",
+    "A039": "same fact as A029 (TB notifications indicator), same page",
+    "A040": "same fact as A030 (Alzheimer grouped with dementias), same page",
+    "A041": "same fact as A031 (Nigeria vs Burkina Faso urbanization), same page",
+    "A021": "same fact as A011 (ultra-processed / NOVA group 4 definition), same page",
+    "A033": "same fact as A023 (Save More Tomorrow), same page",
+    "A053": "same fact as A043 (platforms linking to WHO information), same page",
+    "A060": "overlaps A050 (WHO DMCF purpose), same page",
+    "A076": "same fact as A066 (why the pandemic set back immunization), same page",
+    "A080": "same fact as A070 (double burden of malnutrition definition), same page",
+    "B065": "same fact as B055 (Today and Tomorrow cyclone insurance), same page",
+    "B015": "same fact as B005 (geospatial microplanning), same page",
+    "B016": "same fact as B006 (integrating immunization into primary health care), same page",
+    "B073": "same fact as B063 (private social welfare spending >10% of GDP), same page",
+    "B096": "same fact as B086 (measles immunization and learning outcomes), same page",
+    "A085": "combines two unrelated facts (Palestine response + global procurement)",
+    "B098": "combines two loosely related facts (sexual violence + ICJ case); overlaps A067",
+    "B034": "same fact as B024 (Africa internet use 37% vs 67%), same page",
+    "B017": "subset of B007 (Human Rights Council special sessions), same page",
+    "B079": "same finding as B040 (lowest adolescent birth rates in Western Pacific and Europe)"
+  },
+  "edit": {
+    "B080": {
+      "reason": "ambiguous scope: add ODA and years",
+      "en": {
+        "question": "How did official development assistance (ODA) to the water sector change between 2021 and 2022?",
+        "reference_answer": "Water sector ODA disbursements rose by 11% to US$ 9.1 billion between 2021 and 2022, reversing a five-year decline, while ODA commitments rose by 16% to US$ 11.4 billion. However, the water sector's share of total ODA fell to 3.2% in 2022, a historical low."
+      },
+      "fr": {
+        "question": "Comment l’aide publique au développement (APD) destinée au secteur de l’eau a-t-elle évolué entre 2021 et 2022 ?",
+        "reference_answer": "Les décaissements d’APD en faveur du secteur de l’eau ont augmenté de 11% pour atteindre 9.1 milliards de dollars des États-Unis entre 2021 et 2022, inversant une baisse de cinq ans, tandis que les engagements d’APD ont augmenté de 16% pour atteindre 11.4 milliards de dollars. Toutefois, la part du secteur de l’eau dans l’APD totale est tombée à 3.2% en 2022, un niveau historiquement bas."
+      },
+      "question_type": "natural_user"
+    },
+    "B090": {
+      "reason": "spell out the HPOP abbreviation",
+      "en": {
+        "question": "According to World health statistics 2024, how did adult obesity affect progress toward WHO's healthier populations billion target (one billion more people enjoying better health and well-being) in the Eastern Mediterranean Region?"
+      },
+      "fr": {
+        "question": "Selon les Statistiques sanitaires mondiales 2024, quel a été l’effet de l’obésité chez l’adulte sur les progrès vers la cible du milliard de l’OMS pour des populations en meilleure santé (un milliard de personnes supplémentaires bénéficiant d’un meilleur état de santé et de bien-être) dans la Région de la Méditerranée orientale ?"
+      },
+      "question_type": "source_specific"
+    },
+    "A067": {
+      "reason": "too broad: narrow to provisional measures",
+      "en": {
+        "question": "According to UN report A/77/1, in which proceedings did the International Court of Justice indicate provisional measures?",
+        "reference_answer": "The Court indicated provisional measures in the two proceedings between Armenia and Azerbaijan and in the case of Ukraine v. Russian Federation."
+      },
+      "fr": {
+        "question": "Selon le rapport A/77/1 de l’ONU, dans quelles procédures la Cour internationale de Justice a-t-elle indiqué des mesures conservatoires ?",
+        "reference_answer": "La Cour a indiqué des mesures conservatoires dans les deux procédures opposant l’Arménie et l’Azerbaïdjan et dans l’affaire Ukraine c. Fédération de Russie."
+      },
+      "question_type": "source_specific"
+    },
+    "A043": {
+      "reason": "too broad for a one-sentence answer",
+      "en": {
+        "question": "Which social media platforms suggest links to official World Health Organization information under posts that mention Covid-19?"
+      },
+      "fr": {
+        "question": "Quelles plateformes de réseaux sociaux proposent des liens vers les informations officielles de l’Organisation mondiale de la Santé sous les publications mentionnant la Covid-19 ?"
+      },
+      "question_type": "natural_user"
+    }
+  }
+}

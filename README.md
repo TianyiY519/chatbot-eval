@@ -53,8 +53,10 @@ questions) and reworded questions. `07_revise_testset.py` applies them to the ge
 in 03, from the same document, about a different fact. If a document has no spare left, top it up
 first, e.g. `02_generate_testset.py --set A_extra --half first --docs FAO_SOFI_2023 --size 5 --page-offset 8`
 then `03_verify_testset.py --set A_extra --keep 0`. Every change is listed in
-`data/testset_<SET>_changes.csv`. These review files stay with the maintainer and are not in the repo;
-the published sets `data/testset_A.*` and `data/testset_B.*` already include all revisions. Each case gets a `question_type`: `source_specific` (names a report,
+`data/testset_<SET>_changes.csv`. The review trail is in the repo too: `data/revisions.json` (every decision and why),
+`data/testset_<SET>_changes.csv` (before → after), `data/testset_<SET>_review.csv` (every generated
+draft and the automatic check's verdict) and `data/original/` (the sets as first generated).
+The published sets `data/testset_A.*` and `data/testset_B.*` already include all revisions. Each case gets a `question_type`: `source_specific` (names a report,
 organisation, year or document symbol) or `natural_user` (asked without naming the source), so
 results can be reported separately for both.
 
