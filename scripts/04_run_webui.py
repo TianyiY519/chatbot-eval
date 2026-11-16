@@ -17,6 +17,7 @@ Output: results/<run>/responses.jsonl (+ error screenshots) and a stability summ
 """
 import argparse
 import json
+import re
 import statistics
 import time
 from collections import defaultdict
@@ -52,12 +53,28 @@ def wait_for_answer(page, t: dict, n_before: int) -> str:
         if now != text or busy or not now:
             text, stable_since = now, time.monotonic()
         elif time.monotonic() - stable_since >= t["stable_seconds"]:
+            for pattern in t.get("strip", []):  # interface text inside the reply, e.g. "Thought for 2 seconds"
+                text = re.sub(pattern, "", text).strip()
             return text
         time.sleep(0.5)
 
 
+def dismiss_popups(page, t: dict, wait_ms: int) -> None:
+    """Close banners/dialogs that cover the chat (release notes, cookie or welcome prompts)."""
+    for sel in t.get("dismiss", []):
+        loc = page.locator(sel).first
+        try:
+            if wait_ms:
+                loc.wait_for(state="visible", timeout=wait_ms)
+            if loc.is_visible():
+                loc.click()
+        except PWError:  # not shown this time
+            pass
+
+
 def ask(page, t: dict, question: str) -> str:
     page.goto(t["url"], wait_until="domcontentloaded")
+    dismiss_popups(page, t, 0)
     if t.get("open_chat"):
         page.locator(t["open_chat"]).first.click()
     box = page.locator(t["input"]).first
@@ -134,6 +151,10 @@ def main() -> None:
         (out_dir / "run_info.json").write_text(json.dumps(
             {"target": args.target, "url": t["url"], "set": args.set, "started": datetime.now(timezone.utc).isoformat()},
             indent=2))
+
+        # popups usually appear once, a moment after the first load: clear them before timing starts
+        page.goto(t["url"], wait_until="domcontentloaded")
+        dismiss_popups(page, t, 5_000)
 
         with out.open("a", encoding="utf-8") as f:
             for i, c in enumerate(cases, 1):

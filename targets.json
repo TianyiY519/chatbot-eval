@@ -5,9 +5,15 @@
     "input": "#chat-input",
     "send": "#send-message-button",
     "response": "#response-content-container",
-    "busy": null,
+    "busy": "button[aria-label=\"Stop\"]",
     "stable_seconds": 4,
-    "timeout_seconds": 180
+    "timeout_seconds": 180,
+    "dismiss": [
+      "button:has-text(\"Okay, Let's Go!\")"
+    ],
+    "strip": [
+      "^Thought for [^\\n]*\\n+"
+    ]
   },
   "sharepoint": {
     "url": "https://<tenant>.sharepoint.com/sites/<site>",
@@ -27,5 +33,20 @@
     "busy": null,
     "stable_seconds": 2,
     "timeout_seconds": 60
+  },
+  "owui_local": {
+    "url": "http://127.0.0.1:3000/?model=un-docs-local",
+    "input": "#chat-input",
+    "send": "#send-message-button",
+    "response": "#response-content-container",
+    "busy": "button[aria-label=\"Stop\"]",
+    "stable_seconds": 5,
+    "timeout_seconds": 240,
+    "dismiss": [
+      "button:has-text(\"Okay, Let's Go!\")"
+    ],
+    "strip": [
+      "^Thought for [^\\n]*\\n+"
+    ]
   }
 }

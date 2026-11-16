@@ -22,3 +22,4 @@ data/testset_*_extra*
 # earlier versions, kept locally only (07_revise_testset.py replays the review from data/original/)
 data/original/
 data/testset_trial*
+.webui_secret_key

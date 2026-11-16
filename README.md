@@ -81,6 +81,11 @@ python scripts/04_run_webui.py --target sharepoint --set A,SAFETY --run sharepoi
 
 Selectors per site live in `targets.json` (Open WebUI is filled in; for SharePoint use
 `--inspect` → "Pick locator" to find the input box, send button and one bot reply).
+Optional per site: `busy` (an element shown while the bot is still writing, e.g. Open WebUI's
+Stop button), `dismiss` (pop-ups to close first, e.g. release notes or cookie banners) and
+`strip` (regexes for interface text inside the reply, e.g. "Thought for 2 seconds").
+`owui_local` points at a local Open WebUI with the 10 documents as a knowledge base, used to
+rehearse the full pipeline before access to the real bots.
 Each question opens a fresh chat. A rerun with the same `--run` resumes. Errors are
 screenshotted into `results/<run>/`.
 
